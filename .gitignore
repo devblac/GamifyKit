@@ -1,0 +1,62 @@
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binaries
+*.test
+
+# Coverage and profiling outputs
+*.out
+*.cov
+*.coverprofile
+coverage.*
+coverage/
+*.pprof
+cpu.prof
+mem.prof
+block.prof
+mutex.prof
+trace.out
+
+# Logs and archives
+*.log
+logs/
+*.gz
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+tmp/
+
+# Build/output directories
+bin/
+build/
+dist/
+out/
+target/
+release/
+
+# IDE/editor settings
+.vscode/
+.idea/
+*.iml
+*.code-workspace
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Dependency vendor directory (uncomment if you vendor dependencies)
+# vendor/
+
+
