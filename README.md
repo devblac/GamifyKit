@@ -1,34 +1,126 @@
-GamifyKit – High-performance gamification library for Go
+GamifyKit
 
-Overview
-GamifyKit is a modular, high-performance gamification engine for Go 1.22+. It provides ultra-low-latency, horizontally scalable APIs to add points, XP, levels, badges, achievements, challenges, leaderboards, realtime events, and analytics to any app with minimal code.
+High-performance, modular gamification for Go.
 
-Quick Start
-```go
-import (
-  "context"
-  "gamifykit/core"
-  "gamifykit/gamify"
-  "gamifykit/realtime"
-)
+### Overview
+GamifyKit is a fast, composable gamification engine for Go 1.22+. It provides ultra-low-latency, horizontally scalable building blocks to add points, XP, levels, badges, achievements, challenges, leaderboards, realtime events, and analytics to any app with minimal code.
 
-var ctx = context.Background()
-svc := gamify.New(
-    // defaults to in-memory storage, async dispatch, default rules
-    gamify.WithRealtime(realtime.NewHub()),
-)
+Key goals:
+- Simplicity of API with strong domain types
+- Safe concurrency and immutability of state snapshots
+- Pluggable storage and rules
+- Realtime-first event model
 
-userID := core.UserID("u1")
-svc.AddPoints(ctx, userID, core.MetricXP, 50)
+### Features
+- Points and XP with overflow-safe arithmetic
+- Levels with configurable rule engine (default XP→level progression)
+- Badges and achievements via events and rules
+- Event bus with sync/async dispatch modes
+- Realtime hub and WebSocket adapter for streaming domain events
+- In-memory storage adapter (production adapters sketched for Redis/SQLx)
+- Leaderboard interfaces (Redis backing sketched)
+- Analytics hooks (e.g., DAU aggregator)
 
-unsub := svc.Subscribe(core.EventAchievementUnlocked, func(ctx context.Context, e core.Event) {
-    // handle achievement
-})
-defer unsub()
+### Install
+Until this module is published under a VCS path, use local replace or set your module path. Once hosted:
+
+```bash
+go get github.com/devblac/gamifykit
 ```
 
-See `docs/QuickStart.md` and `cmd/demo-server`.
+### Quick Start
+```go
+package main
 
-License: Apache-2.0
+import (
+    "context"
 
+    "gamifykit/core"
+    "gamifykit/gamify"
+    "gamifykit/realtime"
+)
+
+func main() {
+    ctx := context.Background()
+    hub := realtime.NewHub()
+    svc := gamify.New(
+        gamify.WithRealtime(hub), // optional: stream events to subscribers/WebSocket
+    )
+
+    user := core.UserID("alice")
+    _, _ = svc.AddPoints(ctx, user, core.MetricXP, 50)
+
+    // Subscribe to level ups
+    unsub := svc.Subscribe(core.EventLevelUp, func(ctx context.Context, e core.Event) {
+        // handle level up
+        _ = e
+    })
+    defer unsub()
+}
+```
+
+More examples in `docs/QuickStart.md` and `cmd/demo-server`.
+
+### Architecture
+- `core`: domain types, events, rules, and safe math utilities
+- `engine`: orchestrates storage, rule evaluation, and event dispatch
+- `gamify`: ergonomic builder for the engine with sensible defaults
+- `adapters`: storage layers and transports (in-memory, Redis/SQLx placeholders, WebSocket, gRPC placeholder)
+- `realtime`: lightweight pub/sub for broadcasting events
+- `leaderboard`: interface and scaffolding for scoreboards
+- `analytics`: hooks to aggregate KPIs (e.g., DAU)
+
+### Storage adapters
+- **In-memory**: production-grade for demos/tests, thread-safe
+- **Redis**: complete implementation with connection pooling, atomic operations via Lua scripts, caching, and overflow protection
+- **SQLx**: full implementation for PostgreSQL and MySQL with migrations, transactions, and concurrent access support
+
+### Realtime
+Use the `realtime.Hub` directly or the WebSocket adapter:
+
+```go
+http.Handle("/ws", ws.Handler(hub)) // stream events to clients
+```
+
+### Demo server
+Run a tiny HTTP server exposing points/badges and a WebSocket stream:
+
+```bash
+go run ./cmd/demo-server
+```
+
+Routes:
+- POST `/users/{id}/points?metric=xp&delta=50`
+- POST `/users/{id}/badges/{badge}`
+- GET `/users/{id}`
+- WS `/ws`
+
+### One-command API server
+Spin up a ready-to-use GamifyKit API with CORS and a `/healthz` endpoint:
+
+```bash
+go run ./cmd/gamifykit-server -addr :8080 -prefix /api -cors "*"
+```
+
+Endpoints:
+- GET `/api/healthz`
+- POST `/api/users/{id}/points?metric=xp&delta=50`
+- POST `/api/users/{id}/badges/{badge}`
+- GET `/api/users/{id}`
+- WS `/api/ws`
+
+Use this from a React app by calling the HTTP endpoints and subscribing to the WebSocket for realtime updates.
+
+### Roadmap
+- Production-ready Redis adapter for storage and leaderboard
+- SQLx adapter
+- Pluggable rule sets (achievements/challenges)
+- OpenTelemetry spans/metrics
+- gRPC/HTTP APIs with OpenAPI spec
+
+### Versioning
+Semantic Versioning once published. Current API may evolve.
+
+### License
+Apache-2.0. See `LICENSE`.
 
