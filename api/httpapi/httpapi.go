@@ -31,7 +31,7 @@ func NewMux(svc *engine.GamifyService, hub *realtime.Hub, opts Options) http.Han
 
 	// health
 	mux.HandleFunc(withPrefix(opts.PathPrefix, "/healthz"), func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, map[string]any{"ok": true})
+		healthCheck(w, r, svc)
 	})
 
 	// WebSocket events
@@ -89,6 +89,33 @@ func NewMux(svc *engine.GamifyService, hub *realtime.Hub, opts Options) http.Han
 }
 
 // Helpers
+
+// healthCheck verifies the service is working properly
+func healthCheck(w http.ResponseWriter, r *http.Request, svc *engine.GamifyService) {
+	ctx := r.Context()
+
+	// Verify storage works by trying to fetch a dummy user
+	// This is a safe, lightweight check that doesn't affect real data
+	dummyUser := core.UserID("healthcheck_probe")
+	_, err := svc.GetState(ctx, dummyUser)
+
+	status := map[string]any{
+		"status": "healthy",
+		"checks": map[string]any{
+			"storage": "ok",
+		},
+	}
+
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		status["status"] = "unhealthy"
+		status["checks"].(map[string]any)["storage"] = "failed"
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+
+	writeJSON(w, status)
+}
 
 func withPrefix(prefix, path string) string {
 	if prefix == "" || prefix == "/" {
