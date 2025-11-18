@@ -82,6 +82,29 @@ Use the `realtime.Hub` directly or the WebSocket adapter:
 http.Handle("/ws", ws.Handler(hub)) // stream events to clients
 ```
 
+### Leaderboards
+Efficient score tracking with Redis sorted sets:
+
+```go
+import "gamifykit/leaderboard"
+
+// Create a Redis leaderboard
+client := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+board := leaderboard.NewRedisBoard(client, "game:scores")
+
+// Update scores
+board.Update("alice", 1500)
+board.Update("bob", 1200)
+
+// Get top players
+topPlayers := board.TopN(10)
+
+// Get specific player
+if entry, exists := board.Get("alice"); exists {
+    fmt.Printf("%s has %d points\n", entry.User, entry.Score)
+}
+```
+
 ### Demo server
 Run a tiny HTTP server exposing points/badges and a WebSocket stream:
 
