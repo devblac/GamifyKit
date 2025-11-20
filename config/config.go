@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -150,7 +151,14 @@ func LoadFromFile(path string) (*Config, error) {
 		return nil, fmt.Errorf("invalid config file path: %w", err)
 	}
 
-	data, err := os.ReadFile(path)
+	// Open the file safely after validation
+	file, err := os.Open(path) // #nosec G304 - Path validated above
+	if err != nil {
+		return nil, fmt.Errorf("failed to open config file %s: %w", path, err)
+	}
+	defer file.Close()
+
+	data, err := io.ReadAll(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file %s: %w", path, err)
 	}
