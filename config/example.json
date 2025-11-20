@@ -1,0 +1,61 @@
+{
+  "environment": "development",
+  "profile": "development",
+  "server": {
+    "address": ":8080",
+    "path_prefix": "/api",
+    "cors_origin": "*",
+    "read_timeout": "10s",
+    "write_timeout": "10s",
+    "idle_timeout": "60s",
+    "read_header_timeout": "5s",
+    "shutdown_timeout": "30s"
+  },
+  "storage": {
+    "adapter": "memory",
+    "redis": {
+      "addr": "localhost:6379",
+      "password": "",
+      "db": 0,
+      "pool_size": 10,
+      "min_idle_conns": 2,
+      "dial_timeout": "5s",
+      "read_timeout": "3s",
+      "write_timeout": "3s"
+    },
+    "sql": {
+      "driver": "postgres",
+      "dsn": "postgres://gamifykit:gamifykit@localhost/gamifykit?sslmode=disable",
+      "max_open_conns": 25,
+      "max_idle_conns": 5,
+      "conn_max_lifetime": "5m",
+      "conn_max_idle_time": "2m"
+    },
+    "file": {
+      "path": "./data/gamifykit.json"
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "output": "stdout",
+    "attributes": {
+      "service": "gamifykit",
+      "version": "1.0.0"
+    }
+  },
+  "metrics": {
+    "enabled": false,
+    "address": ":9090",
+    "path": "/metrics",
+    "collect_system": true
+  },
+  "security": {
+    "enable_rate_limit": false,
+    "rate_limit": {
+      "requests_per_minute": 60,
+      "burst_size": 10,
+      "cleanup_interval": "5m"
+    }
+  }
+}
