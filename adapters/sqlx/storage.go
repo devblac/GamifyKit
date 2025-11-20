@@ -82,7 +82,10 @@ func New(config Config) (*Store, error) {
 	defer cancel()
 
 	if err := db.PingContext(ctx); err != nil {
-		db.Close()
+		if closeErr := db.Close(); closeErr != nil {
+			// Log close error but prioritize the ping error
+			// In error cleanup, we don't fail the operation for close errors
+		}
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
@@ -90,7 +93,10 @@ func New(config Config) (*Store, error) {
 
 	// Run migrations
 	if err := store.runMigrations(ctx); err != nil {
-		db.Close()
+		if closeErr := db.Close(); closeErr != nil {
+			// Log close error but prioritize the migration error
+			// In error cleanup, we don't fail the operation for close errors
+		}
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 

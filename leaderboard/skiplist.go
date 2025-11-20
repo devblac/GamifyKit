@@ -1,9 +1,8 @@
 package leaderboard
 
 import (
-	"math/rand"
+	"math/rand/v2"
 	"sync"
-	"time"
 
 	"gamifykit/core"
 )
@@ -31,7 +30,7 @@ func NewSkipList() *SkipList {
 		head:   &node{},
 		lvl:    1,
 		byUser: map[core.UserID]*node{},
-		rng:    rand.New(rand.NewSource(time.Now().UnixNano())),
+		rng:    rand.New(rand.NewPCG(0, 0)),
 	}
 }
 

@@ -3,8 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
+	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	mem "gamifykit/adapters/memory"
@@ -21,6 +22,12 @@ func main() {
 		cors   = flag.String("cors", "*", "Access-Control-Allow-Origin value (empty to disable)")
 	)
 	flag.Parse()
+
+	// Configure JSON logging for production use
+	logHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	})
+	slog.SetDefault(slog.New(logHandler))
 
 	// Build service with sensible defaults.
 	hub := realtime.NewHub()
@@ -42,9 +49,20 @@ func main() {
 		IdleTimeout:       60 * time.Second,
 	}
 
-	log.Printf("gamifykit server listening on %s%s", *addr, *prefix)
+	slog.Info("starting gamifykit server",
+		"address", *addr,
+		"api_prefix", *prefix,
+		"cors_origin", *cors)
+
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatal(err)
+		slog.Error("failed to start server", "error", err)
+		os.Exit(1)
 	}
-	_ = srv.Shutdown(context.Background())
+
+	// Graceful shutdown - this will only be reached if the server is stopped externally
+	slog.Info("server shutting down")
+	if err := srv.Shutdown(context.Background()); err != nil {
+		slog.Error("error during server shutdown", "error", err)
+		os.Exit(1)
+	}
 }

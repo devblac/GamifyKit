@@ -173,7 +173,10 @@ func (s *Store) GetState(ctx context.Context, userID core.UserID) (core.UserStat
 	go func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
-		s.updateStateCache(ctx, userID, state)
+		if err := s.updateStateCache(ctx, userID, state); err != nil {
+			// Cache update failures are not critical, just log them
+			// We don't fail the main operation for cache issues
+		}
 	}()
 
 	return state, nil
